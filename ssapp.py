@@ -1,14 +1,26 @@
 import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
 from ai_providers import ask_watson
 from data_store import update_user
 from insights import spending_summary
 from gamification import assign_badge, progress_message
 from storytelling import story_from_data
 
-st.set_page_config(page_title="💸 Personal Finance Chatbot", layout="centered")
+# --- Page config and background color ---
+st.set_page_config(page_title="💸 Spend Sense", layout="centered")
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background-color: #C4AE9F;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
-st.title("💸 Personal Finance Chatbot")
+st.title("💸 Spend Sense")
 st.write("Your AI-powered financial guide!")
 
 # --- User ID ---
@@ -44,12 +56,24 @@ if uploaded_file:
     else:
         st.error("❌ CSV must have 'Category' and 'Amount' columns.")
 
-# --- Insights ---
+# --- Insights with text + chart ---
 if st.button("Show Spending Insights"):
     if st.session_state["transactions"]:
+        # Text summary
         summary = spending_summary(st.session_state["transactions"])
         st.text(summary)
         st.text(story_from_data(user_id, summary))
+
+        # Bar chart of spending by category
+        df = pd.DataFrame(st.session_state["transactions"])
+        chart_data = df.groupby("category")["amount"].sum()
+        
+        fig, ax = plt.subplots()
+        chart_data.plot(kind="bar", ax=ax, color="#C4AE9F")
+        ax.set_ylabel("Amount Spent")
+        ax.set_title("Spending by Category")
+        st.pyplot(fig)
+
     else:
         st.info("No transactions yet. Add manually or upload a statement.")
 
